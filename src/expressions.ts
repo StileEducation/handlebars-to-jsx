@@ -126,16 +126,22 @@ export const resolveHelper = (
   const params: Array<Babel.Expression> = expression.params.map(resolveExpression);
 
   // Handlebars helpers always take an options argument as the last parameter
-  params.push(
-    Babel.objectExpression(
-      expression.hash.pairs.map((pair) => {
-        return Babel.objectProperty(
-          Babel.stringLiteral(pair.key), 
-          resolveExpression(pair.value)
-        )
-      })
+  // The parameter always has a key called hash :/
+  const hash = Babel.objectExpression(
+    expression.hash.pairs.map((pair) => {
+      return Babel.objectProperty(
+        Babel.stringLiteral(pair.key), 
+        resolveExpression(pair.value)
+      )
+    })
+  );
+  const options = Babel.objectExpression([
+    Babel.objectProperty(
+      Babel.stringLiteral("hash"),
+      hash
     )
-  )
+  ]);
+  params.push(options);
   return Babel.callExpression(Babel.identifier(expression.path.original?.toString() ?? 'undefined'), params)
 }
 
