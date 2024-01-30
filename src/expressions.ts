@@ -123,7 +123,20 @@ export const resolveExpression = (
 export const resolveHelper = (
   expression: Glimmer.MustacheStatement | Glimmer.SubExpression
 ): Babel.CallExpression => {
-  return Babel.callExpression(Babel.identifier(expression.path.original?.toString() ?? 'undefined'), expression.params.map(resolveExpression))
+  const params: Array<Babel.Expression> = expression.params.map(resolveExpression);
+
+  // Handlebars helpers always take an options argument as the last parameter
+  params.push(
+    Babel.objectExpression(
+      expression.hash.pairs.map((pair) => {
+        return Babel.objectProperty(
+          Babel.stringLiteral(pair.key), 
+          resolveExpression(pair.value)
+        )
+      })
+    )
+  )
+  return Babel.callExpression(Babel.identifier(expression.path.original?.toString() ?? 'undefined'), params)
 }
 
 /**
