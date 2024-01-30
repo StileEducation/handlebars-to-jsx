@@ -80,10 +80,14 @@ export const resolveElementChild = (
  */
 export const resolveExpression = (
   expression: Glimmer.Expression
-): Babel.Literal | Babel.Identifier | Babel.MemberExpression => {
+): Babel.Literal | Babel.Identifier | Babel.MemberExpression | Babel.CallExpression => {
   switch (expression.type) {
+    case 'SubExpression': {
+      return resolveHelper(expression);
+    }
+
     case 'PathExpression': {
-            return createPath(expression)
+      return createPath(expression)
     }
 
     case 'BooleanLiteral': {
@@ -107,17 +111,17 @@ export const resolveExpression = (
     }
 
     default: {
-      throw new Error('Unexpected mustache statement')
+      throw new Error(`Unexpected mustache statement: ${JSON.stringify(expression)}`)
     }
   }
 }
 
 
 /**
- * Converts Hbs helper to Babel function call
+ * Converts Hbs helper to Babel function call (also handles Sub Expressions)
  */
 export const resolveHelper = (
-  expression: Glimmer.MustacheStatement
+  expression: Glimmer.MustacheStatement | Glimmer.SubExpression
 ): Babel.CallExpression => {
   return Babel.callExpression(Babel.identifier(expression.path.original?.toString() ?? 'undefined'), expression.params.map(resolveExpression))
 }
